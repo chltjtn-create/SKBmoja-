@@ -6,6 +6,10 @@
 <title>모자분리 공사요청 시스템</title>
 <link rel="stylesheet" href="style.css">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -23,9 +27,10 @@
       <div class="form-group"><label>비밀번호</label><input type="password" id="login-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div id="login-error" class="error-msg" style="display:none"></div>
       <button class="btn-primary full" onclick="doLogin()">로그인</button>
+      <button class="btn-ghost full" onclick="showForgotPassword()" style="font-size:12px;padding:6px">비밀번호를 잊으셨나요?</button>
       <div class="login-divider"><span>또는</span></div>
       <button class="btn-outline full" onclick="showScreen('screen-register')">회원가입 신청</button>
-      <button class="btn-ghost full" onclick="showPublicForm()">🔓 로그인 없이 공사 요청</button>
+      <button class="btn-ghost full" onclick="showPublicForm()">🔓 로그인 없이 신청하기</button>
     </div>
   </div>
 </div>
@@ -45,16 +50,13 @@
         <div class="form-group"><label>연락처 *</label><input type="text" id="reg-phone" placeholder="010-0000-0000"></div>
       </div>
       <div class="form-group"><label>이메일 *</label><input type="email" id="reg-email" placeholder="example@email.com"></div>
-      <div class="form-group"><label>소속 *</label><input type="text" id="reg-org" placeholder="예: PCNI Engineering, 이지전기통신, SKB 강남"></div>
+      <div class="form-group"><label>소속 *</label><input type="text" id="reg-org" placeholder="예: PCNI Engineering, 이지전기통신, SKB"></div>
       <div class="form-group">
         <label>운용팀 (해당 시)</label>
-        <select id="reg-team">
-          <option value="">선택 안함</option>
-          <option>강남</option><option>동작</option><option>수원</option>
-        </select>
+        <select id="reg-team"><option value="">선택 안함</option><option>강남</option><option>동작</option><option>수원</option></select>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>비밀번호 *</label><input type="password" id="reg-pw"></div>
+        <div class="form-group"><label>비밀번호 * (6자 이상)</label><input type="password" id="reg-pw"></div>
         <div class="form-group"><label>비밀번호 확인 *</label><input type="password" id="reg-pw2"></div>
       </div>
       <div id="reg-error" class="error-msg" style="display:none"></div>
@@ -68,20 +70,20 @@
 <!-- 공개 접수폼 -->
 <div id="screen-public" class="screen">
   <div class="app-header">
-    <div class="header-left"><span class="logo-icon-sm">🏗️</span><span class="header-title">모자분리 공사요청</span></div>
+    <div class="header-left"><span class="logo-icon-sm">🏗️</span><span class="header-title">모자분리 신규신청</span></div>
     <button class="btn-ghost-sm" onclick="showScreen('screen-login')">로그인</button>
   </div>
   <div class="content-area">
     <div class="form-card">
-      <h2 class="card-title">📋 공사 요청 접수</h2>
+      <h2 class="card-title">📋 모자분리 신규신청</h2>
       <p class="card-desc">아래 항목을 입력하시면 접수번호가 자동 생성됩니다</p>
       <div id="pub-form-area"></div>
       <div id="pub-success" style="display:none" class="success-box">
         <div class="success-icon">✅</div>
-        <h3>접수 완료!</h3>
+        <h3>신청 완료!</h3>
         <p>접수번호: <strong id="pub-result-no" style="color:var(--primary);font-size:18px"></strong></p>
         <p style="margin-top:8px">담당자가 검토 후 연락드리겠습니다.</p>
-        <button class="btn-primary" style="margin-top:16px" onclick="resetPubForm()">새 요청 접수</button>
+        <button class="btn-primary" style="margin-top:16px" onclick="resetPubForm()">새 신청 접수</button>
       </div>
     </div>
   </div>
@@ -100,9 +102,8 @@
     </aside>
     <main class="main-content">
 
-      <!-- 대시보드 -->
       <div id="page-dashboard" class="page active">
-        <div class="page-header"><h2>📊 대시보드</h2><span id="dash-date" class="page-date"></span></div>
+        <div class="page-header"><h2>📊 모자분리 진행현황</h2><span id="dash-date" class="page-date"></span></div>
         <div class="stat-cards" id="stat-cards"></div>
         <div class="dash-grid">
           <div class="dash-panel"><h3>팀별 현황</h3><div id="team-stats"></div></div>
@@ -111,14 +112,16 @@
         <div class="dash-panel full-width"><h3>최근 접수</h3><div id="recent-list"></div></div>
       </div>
 
-      <!-- 접수 목록 -->
       <div id="page-list" class="page">
         <div class="page-header">
-          <h2>📋 접수 목록</h2>
-          <button class="btn-primary" onclick="showPage('page-new-request')">+ 새 접수</button>
+          <h2>📋 모자분리 신청목록</h2>
+          <button class="btn-primary" onclick="showPage('page-new-request')">+ 신규신청</button>
         </div>
         <div class="filter-bar">
-          <select id="f-status" onchange="renderList()"><option value="">전체 상태</option><option>접수</option><option>SKB승인</option><option>진행중</option><option>완료</option></select>
+          <select id="f-status" onchange="renderList()">
+            <option value="">전체 상태</option>
+            <option>접수</option><option>SKB검토</option><option>협력사접수</option><option>한전접수</option><option>처리완료</option>
+          </select>
           <select id="f-team" onchange="renderList()"><option value="">전체 팀</option><option>강남</option><option>동작</option><option>수원</option></select>
           <select id="f-priority" onchange="renderList()"><option value="">전체 우선순위</option><option>긴급</option><option>보통</option></select>
           <input type="text" id="f-search" placeholder="🔍 건물명 / 접수NO 검색" oninput="renderList()">
@@ -130,19 +133,16 @@
         <div class="pagination" id="pagination"></div>
       </div>
 
-      <!-- 새 접수 -->
       <div id="page-new-request" class="page">
-        <div class="page-header"><h2>✏️ 새 공사 요청</h2><button class="btn-ghost" onclick="showPage('page-list')">← 목록으로</button></div>
+        <div class="page-header"><h2>✏️ 모자분리 신규신청</h2><button class="btn-ghost" onclick="showPage('page-list')">← 목록으로</button></div>
         <div class="form-card" id="new-req-wrap"></div>
       </div>
 
-      <!-- 상세 -->
       <div id="page-detail" class="page">
-        <div class="page-header"><h2>🔍 접수 상세</h2><button class="btn-ghost" onclick="showPage('page-list')">← 목록으로</button></div>
+        <div class="page-header"><h2>🔍 신청 상세</h2><button class="btn-ghost" onclick="showPage('page-list')">← 목록으로</button></div>
         <div id="detail-content"></div>
       </div>
 
-      <!-- 사용자 관리 -->
       <div id="page-users" class="page">
         <div class="page-header"><h2>👥 사용자 관리</h2><button class="btn-primary" onclick="showAddUserModal()">+ 사용자 추가</button></div>
         <div id="user-content"></div>
@@ -152,11 +152,11 @@
   </div>
 </div>
 
-<!-- 모달 -->
 <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
   <div class="modal-box" onclick="event.stopPropagation()"><div id="modal-body"></div></div>
 </div>
 
+<script src="firebase-config.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body>
