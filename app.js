@@ -264,7 +264,8 @@ function renderDashboard() {
     <div class="stat-card total" onclick="filterByStatus('')"><div class="stat-label">전체</div><div class="stat-value">${data.length}</div><div class="stat-sub">건</div></div>
     <div class="stat-card s1" onclick="filterByStatus('접수')"><div class="stat-label">접수</div><div class="stat-value">${cnt('접수')}</div><div class="stat-sub">건</div></div>
     <div class="stat-card s2" onclick="filterByStatus('SKB검토')"><div class="stat-label">SKB검토</div><div class="stat-value">${cnt('SKB검토')}</div><div class="stat-sub">건</div></div>
-    <div class="stat-card s3" onclick="filterByStatus('협력사접수')"><div class="stat-label">협력사접수</div><div class="stat-value">${cnt('협력사접수')+cnt('한전접수')}</div><div class="stat-sub">건</div></div>
+    <div class="stat-card s3" onclick="filterByStatus('협력사접수')"><div class="stat-label">협력사접수</div><div class="stat-value">${cnt('협력사접수')}</div><div class="stat-sub">건</div></div>
+    <div class="stat-card s3b" onclick="filterByStatus('한전접수')"><div class="stat-label">한전접수</div><div class="stat-value">${cnt('한전접수')}</div><div class="stat-sub">건</div></div>
     <div class="stat-card s4" onclick="filterByStatus('처리완료')"><div class="stat-label">처리완료</div><div class="stat-value">${cnt('처리완료')}</div><div class="stat-sub">건</div></div>`;
 
   const teams = ['강남','동작','수원'];
@@ -369,12 +370,16 @@ function actionBtns(r) {
 }
 
 async function quickStatus(no, status) {
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '처리중...'; }
   await updateStatus(no, status);
   toast(status + ' 처리 완료', 'success');
   renderList();
 }
 
 async function quickComplete(no) {
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '처리중...'; }
   await updateStatus(no, '처리완료');
   if (CONFIG.API_URL) await api('sendComplete', { no });
   toast('처리완료 및 메일 발송', 'success');
@@ -386,7 +391,7 @@ function visibleData() {
   if (CU.역할 === '관리자') return allData;
   if (CU.역할 === 'SKB담당자') return allData.filter(r => r.운용팀 === CU.담당팀);
   if (CU.역할 === '협력사') return allData.filter(r => ['SKB검토','협력사접수','한전접수','처리완료'].includes(r.진행상태));
-  return allData.filter(r => r.요청자이름 === CU.이름);
+  return allData.filter(r => r.요청자이메일 === CU.이메일 || r.요청자이름 === CU.이름);
 }
 
 // ── 상세보기 ─────────────────────────────
@@ -424,15 +429,23 @@ function openDetail(no) {
         ${df('차단기위치',r.차단기위치)}${df('계량기위치',r.계량기위치)}${df('요청구분',r.요청구분)}
         ${df('접수일시',r.접수일시)}${df('최종수정일',r.최종수정일)}
       </div>
-      ${r.특이사항?`<div style="margin-top:14px;padding:12px;background:#fef3c7;border-radius:8px;border-left:3px solid #f59e0b"><strong>⚠️ 특이사항:</strong> ${r.특이사항}</div>`:''}
-      ${r.처리메모?`<div style="margin-top:8px;padding:12px;background:#f0f9ff;border-radius:8px;border-left:3px solid #0ea5e9"><strong>📝 처리메모:</strong> ${r.처리메모}</div>`:''}
+      ${r.특이사항?`<div style="margin-top:14px;padding:12px;background:#fef3c7;border-radius:8px;border-left:3px solid #f59e0b"><strong>⚠️ 특이사항:</strong> <span></span></div>`:''}
+      ${r.처리메모?`<div style="margin-top:8px;padding:12px;background:#f0f9ff;border-radius:8px;border-left:3px solid #0ea5e9"><strong>📝 처리메모:</strong> <span></span></div>`:''}
       ${r.사진링크?`<div style="margin-top:8px;padding:12px;background:#f0fdf4;border-radius:8px;border-left:3px solid var(--success)"><strong>📷 첨부사진/파일</strong><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">${r.사진링크.split('\n').filter(u=>u.trim()).map((u,i)=>`<a href="${u.trim()}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--accent);text-decoration:none">📎 파일 ${i+1}</a>`).join('')}</div></div>`:''}
     </div>`;
   showPage('page-detail');
+  // XSS 방지: 사용자 입력값은 textContent로 삽입
+  const spans = document.getElementById('detail-content').querySelectorAll('span');
+  if (r.특이사항 && spans[0]) spans[0].textContent = r.특이사항;
+  if (r.처리메모 && spans[1]) spans[1].textContent = r.처리메모;
 }
 
 function df(label, value) {
-  return `<div class="detail-item"><div class="detail-label">${label}</div><div class="detail-value">${value||'-'}</div></div>`;
+  return `<div class="detail-item"><div class="detail-label">${label}</div><div class="detail-value">${escHtml(value||'-')}</div></div>`;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 async function updateStatusUI(no, status) {
