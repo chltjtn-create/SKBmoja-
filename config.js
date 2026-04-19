@@ -1,6 +1,6 @@
 const CONFIG = {
   SHEET_ID: '13XKPItnk9MaRAS_14-DqMCEHMRh24n6ISjuLtHmCzM8',
-  API_URL: 'https://script.google.com/macros/s/AKfycbwoumbu6tQ71xdxH7iwdZO9Z8NV-cqdW_vKNzwGt32Wd-p_RgvAXBnjq8aIQQDcSlzE/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbxgCsfz2YPmkkwwMmGJZlKYmTJwoYcRfx4suhcMzdhjfwa2d4SpL_Sc1XthS9vai-r5/exec',
   APP_NAME: '모자분리 공사요청 시스템',
   COMPANY: 'SK Broadband 수남구축팀',
   OPTIONS: {

@@ -426,7 +426,7 @@ function openDetail(no) {
       </div>
       ${r.특이사항?`<div style="margin-top:14px;padding:12px;background:#fef3c7;border-radius:8px;border-left:3px solid #f59e0b"><strong>⚠️ 특이사항:</strong> ${r.특이사항}</div>`:''}
       ${r.처리메모?`<div style="margin-top:8px;padding:12px;background:#f0f9ff;border-radius:8px;border-left:3px solid #0ea5e9"><strong>📝 처리메모:</strong> ${r.처리메모}</div>`:''}
-      ${r.사진링크?`<div style="margin-top:8px;padding:12px;background:#f0fdf4;border-radius:8px"><strong>📷 첨부사진:</strong> <a href="${r.사진링크}" target="_blank">사진 보기</a></div>`:''}
+      ${r.사진링크?`<div style="margin-top:8px;padding:12px;background:#f0fdf4;border-radius:8px;border-left:3px solid var(--success)"><strong>📷 첨부사진/파일</strong><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">${r.사진링크.split('\n').filter(u=>u.trim()).map((u,i)=>`<a href="${u.trim()}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#fff;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--accent);text-decoration:none">📎 파일 ${i+1}</a>`).join('')}</div></div>`:''}
     </div>`;
   showPage('page-detail');
 }
