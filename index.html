@@ -10,6 +10,20 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script>
+// Firebase 초기화 (firebase-config.js 대체)
+const firebaseConfig = {
+  apiKey: "AIzaSyDyAmMnVvuGz4IXbtzT-bQk3z70GRoKKJs",
+  authDomain: "mojabunri-01.firebaseapp.com",
+  projectId: "mojabunri-01",
+  storageBucket: "mojabunri-01.firebasestorage.app",
+  messagingSenderId: "926655221621",
+  appId: "1:926655221621:web:fc9e830dc65187b08fcd3c"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+auth.languageCode = 'ko';
+</script>
 </head>
 <body>
 
@@ -156,7 +170,6 @@
   <div class="modal-box" onclick="event.stopPropagation()"><div id="modal-body"></div></div>
 </div>
 
-<script src="firebase-config.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body>
