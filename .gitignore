@@ -1,0 +1,6 @@
+# Firebase 설정 파일 - 실제 값이 있는 파일은 git에 올리지 않음
+firebase-config.js
+
+# 개발 문서 - 계정 정보가 포함될 수 있으므로 제외
+claude.md
+CLAUDE.md
